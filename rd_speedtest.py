@@ -428,7 +428,7 @@ def _ig_bar(strip, geo, frac, lay):
     if s_end < fw - 8:
         right_src = _recolour(right_src, _avg_colour(fill, fw - cap // 2 - 1, mid_y0, mid_y1),
                               _avg_colour(fill, s_end, mid_y0, mid_y1))
-    if wf >= 2 * cap:
+    if wf > 2 * cap:
         mid = fill.crop((cap, 0, max(cap + 1, s_end - cap), bh))
         if wf - 2 * cap != mid.width:
             mid = mid.resize((wf - 2 * cap, bh), Image.LANCZOS)
