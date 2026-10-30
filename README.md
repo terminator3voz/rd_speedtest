@@ -1,6 +1,6 @@
 # Real-Debrid Speedtest
 
-![Downloads](https://img.shields.io/github/downloads/terminator3voz/rd_speedtest/total?cacheSeconds=300)
+[![Downloads](https://img.shields.io/github/downloads/terminator3voz/rd_speedtest/total)](https://github.com/terminator3voz/rd_speedtest/releases)
 
 A multi-threaded download speed testing application for Real-Debrid CDN servers, featuring both a graphical user interface (Tkinter) and a command-line interface (CLI). Test results can also be exported as PNG infographic images.
 
