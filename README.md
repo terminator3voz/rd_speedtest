@@ -1,8 +1,10 @@
 # Real-Debrid Speedtest
 
-A multi-threaded download speed testing application for [Real-Debrid](https://real-debrid.com/speedtest) CDN servers, featuring both a graphical user interface (Tkinter) and a command-line interface (CLI). Test results can also be exported as PNG infographic images.
+![Downloads](https://img.shields.io/github/downloads/terminator3voz/rd_speedtest/total?cacheSeconds=300)
 
-Ứng dụng đo tốc độ tải đa luồng tới các máy chủ CDN của [Real-Debrid](https://real-debrid.com/speedtest), có giao diện (Tkinter) và chế độ dòng lệnh. Có thể xuất kết quả thành ảnh infographic PNG.
+A multi-threaded download speed testing application for Real-Debrid CDN servers, featuring both a graphical user interface (Tkinter) and a command-line interface (CLI). Test results can also be exported as PNG infographic images.
+
+Ứng dụng đo tốc độ tải đa luồng tới các máy chủ CDN của Real-Debrid, có giao diện (Tkinter) và chế độ dòng lệnh. Có thể xuất kết quả thành ảnh infographic PNG.
 
 Phương pháp đo bám theo `speedtest.js` của trang gốc: nhiều luồng song song, giai đoạn làm nóng, hệ số bù overhead 1.1, đơn vị chia cho 1048576.
 
