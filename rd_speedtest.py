@@ -354,23 +354,15 @@ def _paste_rgba(dst, src, x, y):
     dst.paste(src.convert("RGB"), (int(x), int(y)), src.getchannel("A"))
 
 
-def _ig_number(strip, text, ty, lay, int_digits=None):
-    """Ghép số tốc độ từ glyph đã trích từ ảnh mẫu: chữ số cách nhau 17px, dấu chấm theo mẫu.
-
-    Phần nguyên được căn phải theo `int_digits` (số chữ số của số dài nhất) nên dấu chấm thập phân
-    luôn ở cùng một vị trí x ở mọi hàng, và chữ Mbps cũng vậy.
-    """
+def _ig_number_pos(text, lay, x0=517):
+    """Vị trí từng glyph của số tốc độ (bắt đầu từ x0) và mép phải của chữ số cuối."""
     gl = lay["glyphs"]
-    x0 = 517
     pos = []                       # (ký tự, mép trái glyph)
     int_part, _, frac = text.partition(".")
-    n_max = max(int_digits or 0, len(int_part))
-    left = x0
-    last_left = left
+    last_left = x0
     for k, ch in enumerate(int_part):
-        left = x0 + 17 * (k + n_max - len(int_part))
-        pos.append((ch, left))
-        last_left = left
+        last_left = x0 + 17 * k
+        pos.append((ch, last_left))
     dot_left = last_left + 18
     pos.append((".", dot_left))
     left = dot_left + 8
@@ -378,17 +370,32 @@ def _ig_number(strip, text, ty, lay, int_digits=None):
         pos.append((ch, left))
         last_left = left
         left += 17
+    last_ch, last_l = pos[-1]
+    return pos, last_l + gl[last_ch]["w"]
+
+
+def _ig_number_end(text, lay):
+    """Mép phải tự nhiên của số (khi bắt đầu ở x0 mặc định)."""
+    return _ig_number_pos(text, lay)[1]
+
+
+def _ig_number(strip, text, ty, lay, end_x=None):
+    """Ghép số tốc độ từ glyph đã trích từ ảnh mẫu: chữ số cách nhau 17px, dấu chấm theo mẫu.
+
+    Nếu có `end_x`, số được căn phải vào mép đó: mọi hàng có mép phải số trùng nhau,
+    nên khoảng cách số -> "Mbps" bằng nhau và các chữ "Mbps" thẳng cột.
+    """
+    gl = lay["glyphs"]
+    pos, natural_end = _ig_number_pos(text, lay)
+    if end_x is not None:
+        pos, natural_end = _ig_number_pos(text, lay, 517 + (end_x - natural_end))
     for ch, lft in pos:
         g = gl[ch]
         img = _ig_asset(g["file"], "RGBA")
         _paste_rgba(strip, img, lft - g["left"], ty + g["dy"])
-    last_ch, last_l = pos[-1]
-    # Dùng bề rộng ô số lớn nhất (không phụ thuộc chữ số cuối) để chữ Mbps luôn thẳng hàng.
-    cell_w = max(gl[d]["w"] for d in "0123456789" if d in gl)
-    end_x = last_l + cell_w
     mb = lay["mbps"]
     img = _ig_asset(mb["file"], "RGBA")
-    _paste_rgba(strip, img, end_x + mb["gap"] - mb["left"], ty + mb["dy"])
+    _paste_rgba(strip, img, natural_end + mb["gap"] - mb["left"], ty + mb["dy"])
 
 
 def _avg_colour(img, x, y0, y1):
@@ -588,13 +595,14 @@ def create_infographic(values, output_path, when=None):
     if not rows:
         raise ValueError("Chưa có kết quả hợp lệ để xuất.")
     vmax = max(values[n] for n in rows) or 1.0
+    # mép phải chung của các số (theo số rộng nhất) -> căn phải, "Mbps" thẳng hàng
+    num_end = max(_ig_number_end("%.2f" % values[n], lay) for n in rows)
     strips = []
-    int_digits = max(len(("%.2f" % values[n]).partition(".")[0]) for n in rows)
     for n in rows:
         info = lay["rows"][n]
         strip = _ig_asset("row_%s.png" % n, "RGB").copy()
         _ig_bar(strip, info, values[n] / vmax, lay)
-        _ig_number(strip, "%.2f" % values[n], info["ty"], lay, int_digits)
+        _ig_number(strip, "%.2f" % values[n], info["ty"], lay, num_end)
         strips.append(strip)
     top = _ig_asset("top.png", "RGB")
     cap = _ig_asset("cap.png", "RGB")
