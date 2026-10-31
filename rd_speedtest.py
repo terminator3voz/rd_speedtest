@@ -357,20 +357,21 @@ def _paste_rgba(dst, src, x, y):
 def _ig_number(strip, text, ty, lay, int_digits=None):
     """Ghép số tốc độ từ glyph đã trích từ ảnh mẫu: chữ số cách nhau 17px, dấu chấm theo mẫu.
 
-    Canh lề phải theo dấu thập phân: mọi dòng có dấu chấm ở cùng một cột. Cột đó được tính sao cho
-    số có nhiều chữ số nguyên nhất (`int_digits`) bắt đầu đúng ở x0; số ngắn hơn dịch sang phải.
+    Phần nguyên được căn phải theo `int_digits` (số chữ số của số dài nhất) nên dấu chấm thập phân
+    luôn ở cùng một vị trí x ở mọi hàng, và chữ Mbps cũng vậy.
     """
     gl = lay["glyphs"]
     x0 = 517
     pos = []                       # (ký tự, mép trái glyph)
     int_part, _, frac = text.partition(".")
-    if int_digits is None:
-        int_digits = len(int_part)
-    int_digits = max(int_digits, len(int_part))
-    dot_left = x0 + 17 * (int_digits - 1) + 18      # cột dấu chấm cố định cho mọi dòng
-    first_left = dot_left - 18 - 17 * (len(int_part) - 1)
+    n_max = max(int_digits or 0, len(int_part))
+    left = x0
+    last_left = left
     for k, ch in enumerate(int_part):
-        pos.append((ch, first_left + 17 * k))
+        left = x0 + 17 * (k + n_max - len(int_part))
+        pos.append((ch, left))
+        last_left = left
+    dot_left = last_left + 18
     pos.append((".", dot_left))
     left = dot_left + 8
     for k, ch in enumerate(frac):
@@ -382,7 +383,9 @@ def _ig_number(strip, text, ty, lay, int_digits=None):
         img = _ig_asset(g["file"], "RGBA")
         _paste_rgba(strip, img, lft - g["left"], ty + g["dy"])
     last_ch, last_l = pos[-1]
-    end_x = last_l + gl[last_ch]["w"]
+    # Dùng bề rộng ô số lớn nhất (không phụ thuộc chữ số cuối) để chữ Mbps luôn thẳng hàng.
+    cell_w = max(gl[d]["w"] for d in "0123456789" if d in gl)
+    end_x = last_l + cell_w
     mb = lay["mbps"]
     img = _ig_asset(mb["file"], "RGBA")
     _paste_rgba(strip, img, end_x + mb["gap"] - mb["left"], ty + mb["dy"])
@@ -585,8 +588,8 @@ def create_infographic(values, output_path, when=None):
     if not rows:
         raise ValueError("Chưa có kết quả hợp lệ để xuất.")
     vmax = max(values[n] for n in rows) or 1.0
-    int_digits = max(len("%.2f" % values[n]) - 3 for n in rows)   # số chữ số nguyên lớn nhất (bỏ ".xx")
     strips = []
+    int_digits = max(len(("%.2f" % values[n]).partition(".")[0]) for n in rows)
     for n in rows:
         info = lay["rows"][n]
         strip = _ig_asset("row_%s.png" % n, "RGB").copy()
